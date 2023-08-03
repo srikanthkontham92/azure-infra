@@ -1,0 +1,3 @@
+- run: |
+    az group create -n ${{ env.rg-euwe-common-infrastructue
+ }} -l eastus
