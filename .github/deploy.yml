@@ -29,5 +29,5 @@ jobs:
 
     - name: Deploy Bicep file
       run: |
-        az group create --name MyResourceGroup --location eastus # Replace 'MyResourceGroup' and 'eastus' with your desired values
-        az deployment group create --resource-group MyResourceGroup --template-file main.bicep
+        az group create --name rg-euwe-common-infrastructue --location eastus # Replace 'MyResourceGroup' and 'eastus' with your desired values
+        az deployment group create --resource-group rg-euwe-common-infrastructue --template-file main.bicep
