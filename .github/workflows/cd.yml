@@ -5,21 +5,33 @@ on:
     inputs:
       run_terraform:
         description: 'Run Terraform Stage'
-        required: false
+        required: true
         default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
       run_docker_image:
         description: 'Run Docker Image Stage'
-        required: false
+        required: true
         default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
       run_kustomize:
         description: 'Run Kustomize Stage'
-        required: false
+        required: true
         default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
 
 jobs:
   terraform:
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.run_terraform == 'true' }} # Only runs if the input run_terraform is set to 'true'
+    if: ${{ github.event.inputs.run_terraform == 'true' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -35,7 +47,7 @@ jobs:
 
   docker_image:
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.run_docker_image == 'true' }} # Only runs if the input run_docker_image is set to 'true'
+    if: ${{ github.event.inputs.run_docker_image == 'true' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -54,7 +66,7 @@ jobs:
 
   kustomize:
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.run_kustomize == 'true' }} # Only runs if the input run_kustomize is set to 'true'
+    if: ${{ github.event.inputs.run_kustomize == 'true' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
