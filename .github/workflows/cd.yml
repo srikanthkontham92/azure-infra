@@ -1,4 +1,4 @@
-name: CI/CD Workflow
+name: CD Workflow
 
 on:
   workflow_dispatch:
@@ -19,6 +19,23 @@ on:
         options:
           - 'true'
           - 'false'
+      terraform_action:
+        description: 'Terraform Action to Run (plan, apply, destroy)'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - 'plan'
+          - 'apply'
+          - 'destroy'
+      environment:
+        description: 'Environment (dev or qa)'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - 'dev'
+          - 'qa'
       run_docker_image:
         description: 'Run Docker Image Stage'
         required: true
@@ -48,10 +65,19 @@ jobs:
         uses: hashicorp/setup-terraform@v1
 
       - name: Initialize Terraform
-        run: terraform init
+        run: terraform init -backend-config="path=${{ github.event.inputs.environment }}/terraform.tfstate"
 
-      - name: Apply Terraform
-        run: terraform apply -auto-approve
+      - name: Terraform Plan
+        if: ${{ github.event.inputs.terraform_action == 'plan' }}
+        run: terraform plan -var-file="${{ github.event.inputs.environment }}.tfvars"
+
+      - name: Terraform Apply
+        if: ${{ github.event.inputs.terraform_action == 'apply' }}
+        run: terraform apply -auto-approve -var-file="${{ github.event.inputs.environment }}.tfvars"
+
+      - name: Terraform Destroy
+        if: ${{ github.event.inputs.terraform_action == 'destroy' }}
+        run: terraform destroy -auto-approve -var-file="${{ github.event.inputs.environment }}.tfvars"
 
   docker_image:
     runs-on: ubuntu-latest
