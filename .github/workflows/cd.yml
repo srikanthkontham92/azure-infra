@@ -1,27 +1,22 @@
-name: CD Workflow
+name: CI/CD Workflow
 
 on:
   workflow_dispatch:
     inputs:
-      run_all:
-        description: 'Run All Stages'
+      stages_to_run:
+        description: 'Select Stages to Run'
         required: true
-        default: 'false'
+        default: 'none'
         type: choice
         options:
-          - 'true'
-          - 'false'
-      run_terraform:
-        description: 'Run Terraform Stage'
-        required: true
-        default: 'false'
-        type: choice
-        options:
-          - 'true'
-          - 'false'
+          - 'all'
+          - 'terraform'
+          - 'docker'
+          - 'kustomize'
+          - 'none'
       terraform_action:
         description: 'Terraform Action to Run (plan, apply, destroy)'
-        required: true
+        required: false
         default: 'plan'
         type: choice
         options:
@@ -30,33 +25,17 @@ on:
           - 'destroy'
       environment:
         description: 'Environment (dev or qa)'
-        required: true
+        required: false
         default: 'dev'
         type: choice
         options:
           - 'dev'
           - 'qa'
-      run_docker_image:
-        description: 'Run Docker Image Stage'
-        required: true
-        default: 'false'
-        type: choice
-        options:
-          - 'true'
-          - 'false'
-      run_kustomize:
-        description: 'Run Kustomize Stage'
-        required: true
-        default: 'false'
-        type: choice
-        options:
-          - 'true'
-          - 'false'
 
 jobs:
   terraform:
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.run_all == 'true' || github.event.inputs.run_terraform == 'true' }}
+    if: ${{ github.event.inputs.stages_to_run == 'all' || github.event.inputs.stages_to_run == 'terraform' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -81,7 +60,7 @@ jobs:
 
   docker_image:
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.run_all == 'true' || github.event.inputs.run_docker_image == 'true' }}
+    if: ${{ github.event.inputs.stages_to_run == 'all' || github.event.inputs.stages_to_run == 'docker' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -100,7 +79,7 @@ jobs:
 
   kustomize:
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.run_all == 'true' || github.event.inputs.run_kustomize == 'true' }}
+    if: ${{ github.event.inputs.stages_to_run == 'all' || github.event.inputs.stages_to_run == 'kustomize' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
