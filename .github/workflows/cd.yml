@@ -1,3 +1,5 @@
+name: Test Workflow
+
 on:
   schedule:
     # From Monday to Friday at 6:00 AM
@@ -29,47 +31,17 @@ on:
           - dev
           - qa
 
-permissions: 
+permissions:
   id-token: write
   contents: read
-
-# env:
-#   CLUSTER_NAME: "aks-lgtm-${{ github.event.inputs.environment }}"
-#   RESOURCE_GROUP: "${{ vars.RESOURCE_GROUP }}"
 
 jobs:
   terraform-execute:
     name: Provision Infrastructure
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.actions == 'terraform' || github.event.inputs.actions == 'all' }}
-    # env:
-    #   ARM_TENANT_ID : ${{ vars.AZURE_TENANT_ID }}
-    #   ARM_SUBSCRIPTION_ID : ${{ vars.AZURE_SUBSCRIPTION_ID }}
-    #   ARM_CLIENT_ID : ${{ vars.AZURE_MI_CLIENT_ID }}
-    #   TF_VERSION: 1.7.4
-    #   RESOURCE_GROUP: ${{ vars.TF_RESOURCE_GROUP }}
-    #   STORAGE_ACCOUNT: ${{ vars.TF_STORAGE_ACCOUNT }}
-    #   STORAGE_SECRET: ${{ secrets.TF_STORAGE_SECRET }}
-    #   CONTAINER_NAME: ${{ vars.TF_CONTAINER_NAME }}
-    #   STATE_KEY: ${{ vars.TF_STATE_KEY }}
-    #   GIT_TOKEN: ${{ secrets.GH_TOKEN }}
-    #   GITRUNNER_TOKEN: ${{ secrets.RUNNER_REGISTRATION_TOKEN }}
-    # outputs:
-    #   ACR_REPO: ${{ steps.tf-output.outputs.ACR_REPO }}
-    #   ACR_USER: ${{ steps.tf-output.outputs.ACR_USER }}
-    #   ACR_PASS: ${{ steps.tf-output.outputs.ACR_PASSWORD }}
-    #   POSTGRES_PASSWORD: ${{ steps.tf-output.outputs.POSTGRES_PASSWORD }}
-    #   public_ip_address: ${{ steps.tf-output.outputs.public_ip_address }}
-    #   POSTGRES_FQDN: ${{ steps.tf-output.outputs.POSTGRES_FQDN }}
-    #   COSMOSDB_ACCESSKEY: ${{ steps.tf-output.outputs.COSMOSDB_ACCESSKEY }}
-    #   COSMOSDB_URI: ${{ steps.tf-output.outputs.COSMOSDB_URI }}
-
-    # defaults:
-    #   run:
-    #     shell: bash
-    #     working-directory: infra
-    # environment: "${{ github.event.inputs.environment }}"
-
+    env:
+      TF_VERSION: 1.7.4
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -80,127 +52,77 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
       
-      # - name: 'Authenticate to Azure'
-      #   uses: azure/login@v1
-      #   with:
-      #     client-id: ${{ env.ARM_CLIENT_ID }}
-      #     tenant-id: ${{ env.ARM_TENANT_ID }}
-      #     subscription-id: ${{ env.ARM_SUBSCRIPTION_ID }}
-  
       - name: Terraform init
-        id: init
-        run: terraform init -backend-config="resource_group_name=${{ env.RESOURCE_GROUP }}" -backend-config="storage_account_name=${{ env.STORAGE_ACCOUNT }}" -backend-config="container_name=${{env.CONTAINER_NAME}}" -backend-config="key=${{env.STATE_KEY}}" -backend-config="access_key=${{env.STORAGE_SECRET}}"
+        run: echo "Initializing Terraform"
 
       - name: Terraform plan
-        id: tf-plan
-        if: "${{ github.event.inputs.option == 'plan' }}"
-        # run: terraform ${{ github.event.inputs.option }} --var-file=${{ github.event.inputs.environment }}.tfvars -var="runner_token=${{env.GITRUNNER_TOKEN}}" -no-color -input=false
-  
-      - name: Terraform ${{ github.event.inputs.option }}
-        id: tf-execute
-        if: "${{ github.event.inputs.option == 'apply' || github.event.inputs.option == 'destroy' }}"
-        # run: terraform ${{ github.event.inputs.option }} --var-file=${{ github.event.inputs.environment }}.tfvars -var="runner_token=${{env.GITRUNNER_TOKEN}}" -auto-approve -input=false
+        if: ${{ github.event.inputs.option == 'plan' }}
+        run: echo "Planning Terraform deployment"
 
-      # - name: Terraform output
-      #   id: tf-output
-      #   if: "${{ github.event.inputs.option == 'apply' }}"
-      #   run: |
-      #     repo=$(terraform output -raw acr_login_server)
-      #     user=$(terraform output -raw acr_admin_username)
-      #     public_ip=$(terraform output -raw public_ip_address)
-      #     postgres_password=$(terraform output -raw db_password)
-      #     cosmosdb_accesskey=$(terraform output -raw cosmosdb_accesskey)
-      #     cosmosdb_uri=$(terraform output -raw cosmosdb_uri)
-      #     POSTGRES_FQDN_tf=$(terraform output -raw postgres_fqdn)
+      - name: Terraform apply
+        if: ${{ github.event.inputs.option == 'apply' }}
+        run: echo "Applying Terraform deployment"
 
-      #     echo "ACR_REPO=$repo" >> "$GITHUB_OUTPUT"
-      #     echo "ACR_USER=$user" >> "$GITHUB_OUTPUT"
-      #     echo "POSTGRES_PASSWORD=$postgres_password" >> "$GITHUB_OUTPUT"
-      #     echo "COSMOSDB_ACCESSKEY=$(echo -n $cosmosdb_accesskey | base64 -w 0)" >> "$GITHUB_OUTPUT"
-      #     echo "COSMOSDB_URI=$cosmosdb_uri" >> "$GITHUB_OUTPUT"
-      #     echo "POSTGRES_FQDN=$POSTGRES_FQDN_tf" >> "$GITHUB_OUTPUT"
-      #     echo "public_ip_address=$public_ip" >> "$GITHUB_OUTPUT"
-      #     echo $GITHUB_OUTPUT
+      - name: Terraform destroy
+        if: ${{ github.event.inputs.option == 'destroy' }}
+        run: echo "Destroying Terraform resources"
 
   setup-env:
     name: Setup Environment
     runs-on: ubuntu-latest
-    if: "${{ github.event.inputs.actions == 'all' }}"
+    if: ${{ github.event.inputs.actions == 'all' }}
     needs: terraform-execute
     steps:
       - uses: actions/checkout@v4
       - name: Run setup script
-        run: ./scripts/setup-env.sh
+        run: echo "Setting up environment"
 
   create-app-secrets:
     name: Create Application Secrets
     runs-on: ubuntu-latest
-    if: "${{ github.event.inputs.actions == 'all' }}"
+    if: ${{ github.event.inputs.actions == 'all' }}
     needs: setup-env
     steps:
       - uses: actions/checkout@v4
       - name: Create secrets for apps
-        run: ./scripts/create-app-secrets.sh
+        run: echo "Creating application secrets"
 
   create-grafana-secrets:
     name: Create Grafana Secrets
     runs-on: ubuntu-latest
-    if: "${{ github.event.inputs.actions == 'all' }}"
+    if: ${{ github.event.inputs.actions == 'all' }}
     needs: setup-env
     steps:
       - uses: actions/checkout@v4
       - name: Create Grafana secrets
-        run: ./scripts/create-grafana-secrets.sh
+        run: echo "Creating Grafana secrets"
 
   deploy-argocd:
     name: Deploy ArgoCD
     runs-on: ubuntu-latest
-    if: "${{ github.event.inputs.actions == 'all' }}"
+    if: ${{ github.event.inputs.actions == 'all' }}
     needs: [setup-env, create-app-secrets, create-grafana-secrets]
     steps:
       - uses: actions/checkout@v4
       - name: Deploy ArgoCD
-        run: ./scripts/deploy-argocd.sh
+        run: echo "Deploying ArgoCD"
 
   publish-images:
-    name: "Publish Docker Images"
+    name: Publish Docker Images
     runs-on: ubuntu-latest
     needs: terraform-execute
-    if: "${{ github.event.inputs.actions == 'docker-image' || github.event.inputs.actions == 'all' }}"
-    environment: "${{ github.event.inputs.environment }}"
+    if: ${{ github.event.inputs.actions == 'docker-image' || github.event.inputs.actions == 'all' }}
     steps:
       - uses: actions/checkout@v4
-      - id: publish-docker-images
-        uses: ./.github/actions/publish-docker-images
-        with:
-          client-id: ${{vars.AZURE_MI_CLIENT_ID}}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-          resource-group: ${{ env.RESOURCE_GROUP }}
+      - name: Publish Docker images
+        run: echo "Publishing Docker images"
 
   deploy-kustomize:
-    name: "Deploy Kustomize"
+    name: Deploy Kustomize
     runs-on: ubuntu-latest
-    if: "${{ github.event.inputs.actions == 'kustomize' || github.event.inputs.actions == 'all' }}"
-    environment: "${{ github.event.inputs.environment }}"
+    if: ${{ github.event.inputs.actions == 'kustomize' || github.event.inputs.actions == 'all' }}
     needs: [terraform-execute, publish-images, setup-env]
-    env:
-      KUSTOMIZE_VERSION: 4.5.7
-      MIMIR_AZURE_USER_ID: ${{ needs.setup-env.outputs.kubelet_identity }}
-      LOKI_AZURE_USER_ID:  ${{ needs.setup-env.outputs.kubelet_identity }}
-      TEMPO_AZURE_USER_ID: ${{ needs.setup-env.outputs.kubelet_identity }}
-      ENTRYPOINT_CERT: ${{ secrets.ENTRYPOINT_CERT }}
-      ENTRYPOINT_PRIVATE_KEY: ${{ secrets.ENTRYPOINT_PRIVATE_KEY }}
-      INTERNAL_AUTH_TOKEN: ${{ secrets.OTELC_INTERNAL_USER }}
-      SELF_MONITORING_AUTH_TOKEN: ${{ secrets.OTELC_MONITORING_USER }}
-      COSMOS_DB_KEY: ${{ secrets.COSMOS_DB_KEY }}
-      PUBLIC_IP_ADDRESS: ${{ needs.terraform-execute.outputs.public_ip_address }}
-
     steps:
       - uses: actions/checkout@v4
-  
-      - id: aks-connect
-        uses: ./.github/actions/aks-connect
-        with:
-          client-id: ${{ vars.AZURE_MI_CLIENT_ID }}
-          subscription-id: ${{ vars.AZURE
+      - name: Deploy Kustomize
+        run: echo "Deploying Kustomize"
