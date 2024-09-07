@@ -51,7 +51,7 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
-      
+
       - name: Terraform init
         run: echo "Initializing Terraform"
 
