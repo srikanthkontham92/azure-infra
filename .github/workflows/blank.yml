@@ -1,36 +1,128 @@
-# This is a basic workflow to help you get started with Actions
+name: Test Workflow
 
-name: CI
-
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
-  # Allows you to run this workflow manually from the Actions tab
+  schedule:
+    # From Monday to Friday at 6:00 AM
+    - cron: "0 6 * * 1-5"
   workflow_dispatch:
+    inputs:
+      actions:
+        description: "Action Options"
+        default: "all"
+        type: choice
+        options:
+          - terraform
+          - docker-image
+          - kustomize
+          - all
+      option:
+        description: "Terraform option"
+        default: "apply"
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+      environment:
+        description: "Environment to deploy applications to"
+        default: "qa"
+        type: choice
+        options:
+          - dev
+          - qa
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  terraform-execute:
+    name: Provision Infrastructure
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    if: ${{ github.event.inputs.actions == 'terraform' || github.event.inputs.actions == 'all' }}
+    env:
+      TF_VERSION: 1.7.4
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+      - name: Setup terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+      
+      - name: Terraform init
+        run: echo "Initializing Terraform"
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
-        run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+      - name: Terraform plan
+        if: ${{ github.event.inputs.option == 'plan' }}
+        run: echo "Planning Terraform deployment"
+
+      - name: Terraform apply
+        if: ${{ github.event.inputs.option == 'apply' }}
+        run: echo "Applying Terraform deployment"
+
+      - name: Terraform destroy
+        if: ${{ github.event.inputs.option == 'destroy' }}
+        run: echo "Destroying Terraform resources"
+
+  setup-env:
+    name: Setup Environment
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.actions == 'all' }}
+    needs: terraform-execute
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run setup script
+        run: echo "Setting up environment"
+
+  create-app-secrets:
+    name: Create Application Secrets
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.actions == 'all' }}
+    needs: setup-env
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create secrets for apps
+        run: echo "Creating application secrets"
+
+  create-grafana-secrets:
+    name: Create Grafana Secrets
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.actions == 'all' }}
+    needs: setup-env
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create Grafana secrets
+        run: echo "Creating Grafana secrets"
+
+  deploy-argocd:
+    name: Deploy ArgoCD
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.actions == 'all' }}
+    needs: [setup-env, create-app-secrets, create-grafana-secrets]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy ArgoCD
+        run: echo "Deploying ArgoCD"
+
+  publish-images:
+    name: Publish Docker Images
+    runs-on: ubuntu-latest
+    needs: terraform-execute
+    if: ${{ github.event.inputs.actions == 'docker-image' || github.event.inputs.actions == 'all' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish Docker images
+        run: echo "Publishing Docker images"
+
+  deploy-kustomize:
+    name: Deploy Kustomize
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.actions == 'kustomize' || github.event.inputs.actions == 'all' }}
+    needs: [terraform-execute, publish-images, setup-env]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy Kustomize
+        run: echo "Deploying Kustomize"
