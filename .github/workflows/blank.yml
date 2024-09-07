@@ -50,22 +50,21 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
-          terraform_wrapper: false
 
       - name: Terraform init
-        run: echo "Initializing Terraform"
+        run: terraform init
 
       - name: Terraform plan
         if: ${{ github.event.inputs.option == 'plan' }}
-        run: echo "Planning Terraform deployment"
+        run: terraform plan
 
       - name: Terraform apply
         if: ${{ github.event.inputs.option == 'apply' }}
-        run: echo "Applying Terraform deployment"
+        run: terraform apply -auto-approve
 
       - name: Terraform destroy
         if: ${{ github.event.inputs.option == 'destroy' }}
-        run: echo "Destroying Terraform resources"
+        run: terraform destroy -auto-approve
 
   setup-env:
     name: Setup Environment
@@ -75,7 +74,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run setup script
-        run: echo "Setting up environment"
+        run: ./scripts/setup-env.sh
 
   create-app-secrets:
     name: Create Application Secrets
@@ -85,7 +84,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Create secrets for apps
-        run: echo "Creating application secrets"
+        run: ./scripts/create-app-secrets.sh
 
   create-grafana-secrets:
     name: Create Grafana Secrets
@@ -95,7 +94,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Create Grafana secrets
-        run: echo "Creating Grafana secrets"
+        run: ./scripts/create-grafana-secrets.sh
 
   deploy-argocd:
     name: Deploy ArgoCD
@@ -105,7 +104,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deploy ArgoCD
-        run: echo "Deploying ArgoCD"
+        run: ./scripts/deploy-argocd.sh
 
   publish-images:
     name: Publish Docker Images
@@ -115,7 +114,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Publish Docker images
-        run: echo "Publishing Docker images"
+        run: ./scripts/publish-docker-images.sh
 
   deploy-kustomize:
     name: Deploy Kustomize
@@ -125,4 +124,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deploy Kustomize
-        run: echo "Deploying Kustomize"
+        run: ./scripts/deploy-kustomize.sh
