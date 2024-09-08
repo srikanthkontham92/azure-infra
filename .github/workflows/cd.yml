@@ -146,8 +146,8 @@ jobs:
     name: "Setup Environment"
     runs-on: ubuntu-latest
     needs: terraform-execute
-    if: "${{ github.event.inputs.option == 'apply' || github.event.inputs.actions == 'all' }}"
-    # if: ${{ github.event.inputs.option == 'apply' && github.event.inputs.actions == 'all' }}
+    # if: "${{ github.event.inputs.option == 'apply' || github.event.inputs.actions == 'all' }}"
+    if: ${{ github.event.inputs.option == 'apply' && github.event.inputs.actions == 'all' }}
     environment: "${{ github.event.inputs.environment }}"
     outputs:
       kubelet_identity: ${{ steps.get-kubelet-identity.outputs.kubelet_identity }}
