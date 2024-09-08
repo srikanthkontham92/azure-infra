@@ -43,6 +43,7 @@ jobs:
   terraform-execute:
     name: Provision Infrastructure
     runs-on: ubuntu-latest
+    if: "${{ github.event.inputs.actions == 'all' }}"
     env:
       ARM_TENANT_ID : ${{ vars.AZURE_TENANT_ID }}
       ARM_SUBSCRIPTION_ID : ${{ vars.AZURE_SUBSCRIPTION_ID }}
