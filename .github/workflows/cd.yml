@@ -254,6 +254,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: "${{ github.event.inputs.environment }}"
     needs: [setup-env, terraform-execute]
+    if: "${{ github.event.inputs.actions == 'all' }}"
     env:
       KUBE_NAMESPACE: grafana
       POSTGRES_PASSWORD: ${{ needs.terraform-execute.outputs.POSTGRES_PASSWORD }}
