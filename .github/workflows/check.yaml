@@ -3,6 +3,12 @@ name: Daily
 on:
   schedule:
     - cron: '*/2 * * * *'  # Run every 5 minutes
+  workflow_dispatch:  # Allows manual triggering
+    inputs:
+      date:
+        description: 'Date to run the job for (format: YYYY-MM-DD)'
+        required: false
+        default: ''
 
 jobs:
   example_job:
