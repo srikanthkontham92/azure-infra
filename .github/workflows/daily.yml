@@ -41,12 +41,9 @@ jobs:
 
       - name: Run script
         run: |
-          # Check if a date input was provided
           if [ -z "${{ github.event.inputs.date }}" ]; then
-            # No date provided, run the daily job
             poetry run sentry-chargeback-daily
           else
-            # Date provided, run the job with the specified date
             poetry run sentry-chargeback-daily "${{ github.event.inputs.date }}"
           fi
         env:
