@@ -1,0 +1,57 @@
+name: Sentry Chargeback Daily
+
+on:
+  schedule:
+    - cron: '*/2 * * * *'  # Run every 5 minutes
+  workflow_dispatch:  # Allows manual triggering
+    inputs:
+      date:
+        description: 'Date to run the job for (format: YYYY-MM-DD)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  chargeback:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11']
+    defaults:
+      run:
+        working-directory: ./sentry
+    environment: prod
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python 🐍
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install poetry
+        run: |
+          pip install poetry==1.6.1
+
+      - name: Install dependencies
+        run: |
+          poetry install
+
+      - name: Run script
+        run: |
+          # Check if a date input was provided
+          if [ -z "${{ github.event.inputs.date }}" ]; then
+            # No date provided, run the daily job
+            poetry run sentry-chargeback-daily
+          else
+            # Date provided, run the job with the specified date
+            poetry run sentry-chargeback-daily "${{ github.event.inputs.date }}"
+          fi
+        env:
+          SENTRY_ORG_SLUG: ${{ vars.SENTRY_ORG_SLUG }}
+          SENTRY_API_KEY: ${{ secrets.SENTRY_API_KEY }}
+          SPLUNK_INDEX: ${{ vars.SPLUNK_INDEX }}
+          SPLUNK_HEC_ENDPOINT: ${{ vars.SPLUNK_HEC_ENDPOINT }}
+          SPLUNK_HEC_TOKEN: ${{ secrets.SPLUNK_HEC_TOKEN }}
