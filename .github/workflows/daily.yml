@@ -1,4 +1,4 @@
-name: Sentry Chargeback Daily
+name: Daily
 
 on:
   schedule:
