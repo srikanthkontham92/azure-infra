@@ -2,7 +2,7 @@ name: Sentry Chargeback Daily
 
 on:
   schedule:
-    - cron: '*/2 * * * *'  # Run every 5 minutes
+    - cron: '*/2 * * * *'  # Run every 2 minutes
   workflow_dispatch:  # Allows manual triggering
     inputs:
       date:
