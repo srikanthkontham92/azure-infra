@@ -1,0 +1,12 @@
+name: Daily
+
+on:
+  schedule:
+    - cron: '*/2 * * * *'  # Run every 5 minutes
+
+jobs:
+  example_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test Step
+        run: echo "This is a test of the scheduled workflow"
